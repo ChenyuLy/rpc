@@ -6,20 +6,22 @@
 #include <stdio.h>
 #include "log.h"
 
+
 namespace rocket
 {
 
     static Logger *g_logger = nullptr;
     Logger *Logger::GetGlobgalLogger()
     {
-        if (g_logger)
-        {
-            return g_logger;
-        }
-        g_logger = new Logger();
         return g_logger;
     }
 
+    void Logger::InitGlobgalLogger()
+    {
+        LogLevel globel_log_level = StringToLoglevel(Config::GetGlobalConfig()->m_log_level);
+        g_logger = new Logger(globel_log_level);
+        
+    }
     std::string LogLevelToString(LogLevel level)
     {
         switch (level)
@@ -34,6 +36,20 @@ namespace rocket
             return "UNKNOW";
         }
         return std::string();
+    }
+
+    LogLevel StringToLoglevel(const std::string &log_level)
+    {
+        if(log_level == "DEBUG"){
+            return Debug;
+        } else if(log_level == "INFO"){
+            return Info;
+        }else if(log_level == "ERROR"){
+            return Error;
+        }else if(log_level == "UNKNOW"){
+            return Unknow;
+        }
+        return Unknow;
     }
 
     std::string LogEvent::toString()
@@ -60,6 +76,7 @@ namespace rocket
 
         ss << "[" << LogLevelToString(m_level) << "]\t"
            << "[" << time_str << "]\t"
+           << "[" << m_pid << ":"<< m_thread_id << "]\t"
            << "[" << std::string(__FILE__) << ":" << __LINE__ << "]\t";
 
         return ss.str();
@@ -67,18 +84,29 @@ namespace rocket
 
     void Logger::log()
     {
-        while (!m_buffer.empty())
-        {
-            std::string msg = m_buffer.front();
+        ScopeMutext<Mutex> lock(m_mutex);
+        std::queue<std::string> tmp = m_buffer;
+        // m_buffer.swap(tmp);
+        while(!m_buffer.empty()){
             m_buffer.pop();
-
-            printf(msg.c_str());
         }
-    }
+        lock.unlock();
+
+        while (!tmp.empty())
+        {
+            std::string msg = tmp.front();
+            tmp.pop();
+
+            printf("%s",msg.c_str());
+        }
+        
+    } 
 
     void Logger::pushLog(const std::string &msg)
     {
+        ScopeMutext<Mutex> lock(m_mutex);
         m_buffer.push(msg);
+        lock.unlock();
     }
 
 }

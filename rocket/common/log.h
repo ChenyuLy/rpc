@@ -2,9 +2,11 @@
 #define ROCKET_COMMON_LOG_H
 
 #include <string>
-#include <vector>
 #include <queue>
 #include <memory>
+// #include <common/config.h>
+#include "rocket/common/config.h"
+#include "rocket/common/mutex.h"
 
 namespace rocket
 {
@@ -23,19 +25,38 @@ namespace rocket
 
         return std::string(result);
     }
-#define DEBUGLOG(str, ...)                                                                                                    \
-    std::string msg = (new rocket::LogEvent(rocket::LogLevel::Debug))->toString() + rocket::formatString(str, ##__VA_ARGS__) + "\n"; \
-    rocket::Logger::GetGlobgalLogger()->pushLog(msg);                                                                           \
-    rocket::Logger::GetGlobgalLogger()->log();
+
+#define DEBUGLOG(str, ...)                                                                                                                                          \
+    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Debug)                                                                                         \
+    {                                                                                                                                                               \
+        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Debug))->toString() + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                  \
+    }
+
+#define INFOLOG(str, ...)                                                                                                                                          \
+    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Info)                                                                                         \
+    {                                                                                                                                                              \
+        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Info))->toString() + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                 \
+    }
+
+#define ERRORLOG(str, ...)                                                                                                                                          \
+    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Error)                                                                                         \
+    {                                                                                                                                                               \
+        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Error))->toString() + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                  \
+    }
 
     enum LogLevel
     {
+        Unknow = 0,
         Debug = 1,
         Info = 2,
         Error = 3
     };
 
     std::string LogLevelToString(LogLevel level);
+    LogLevel StringToLoglevel(const std::string &log_level);
 
     class Logger
     {
@@ -43,13 +64,23 @@ namespace rocket
         LogLevel m_set_level;
         std::queue<std::string> m_buffer;
 
+        Mutex m_mutex;
+
     public:
-        static Logger* GetGlobgalLogger();
+        
+        static void InitGlobgalLogger();
+        static Logger *GetGlobgalLogger();
 
     public:
         void log();
         void pushLog(const std::string &msg);
         typedef std::shared_ptr<Logger> s_ptr;
+
+        Logger(LogLevel level) : m_set_level(level){};
+        LogLevel getLogLevel() const
+        {
+            return m_set_level;
+        }
     };
 
     class LogEvent
@@ -62,7 +93,7 @@ namespace rocket
         int32_t m_thread_id;
         LogLevel m_level;
 
-    public:
+    public: 
         std::string getFileName() const
         {
             return m_file_name;
