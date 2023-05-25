@@ -26,25 +26,25 @@ namespace rocket
         return std::string(result);
     }
 
-#define DEBUGLOG(str, ...)                                                                                                                                          \
-    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Debug)                                                                                         \
-    {                                                                                                                                                               \
-        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Debug))->toString() + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
-        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                  \
+#define DEBUGLOG(str, ...)                                                                                                                                                                                                 \
+    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Debug)                                                                                                                                                \
+    {                                                                                                                                                                                                                      \
+        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Debug))->toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                                                                         \
     }
 
-#define INFOLOG(str, ...)                                                                                                                                          \
-    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Info)                                                                                         \
-    {                                                                                                                                                              \
-        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Info))->toString() + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
-        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                 \
+#define INFOLOG(str, ...)                                                                                                                                                                                                 \
+    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Info)                                                                                                                                                \
+    {                                                                                                                                                                                                                     \
+        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Info))->toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                                                                        \
     }
 
-#define ERRORLOG(str, ...)                                                                                                                                          \
-    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Error)                                                                                         \
-    {                                                                                                                                                               \
-        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Error))->toString() + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
-        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                  \
+#define ERRORLOG(str, ...)                                                                                                                                                                                                 \
+    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Error)                                                                                                                                                \
+    {                                                                                                                                                                                                                      \
+        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Error))->toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                                                                         \
     }
 
     enum LogLevel
@@ -67,7 +67,6 @@ namespace rocket
         Mutex m_mutex;
 
     public:
-        
         static void InitGlobgalLogger();
         static Logger *GetGlobgalLogger();
 
@@ -93,7 +92,7 @@ namespace rocket
         int32_t m_thread_id;
         LogLevel m_level;
 
-    public: 
+    public:
         std::string getFileName() const
         {
             return m_file_name;
