@@ -2,6 +2,7 @@
 #define ROCKET_NET_EVENTLOOP_H
 
 #include <pthread.h>
+#include "rocket/common/Safequeue.h"
 #include <set>
 #include <functional>
 #include <queue>
@@ -24,7 +25,7 @@ namespace rocket
 
         bool m_stop_flag {false};
          
-       std::queue<std::function<void()>> m_pending_tasks;
+       SafeQueue<std::function<void()>> m_pending_tasks;
        Mutex m_mutex;
 
        void dealWakeup();

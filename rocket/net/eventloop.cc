@@ -80,11 +80,10 @@ namespace rocket
     {
         while (!m_stop_flag)
         {
-            ScopeMutext<Mutex> lock(m_mutex);
-            std::queue<std::function<void()>> tmp_tasks ;
+            // ScopeMutext<Mutex> lock(m_mutex);
+            rocket::SafeQueue<std::function<void()>> tmp_tasks ;
             m_pending_tasks.swap(tmp_tasks);
-            
-            lock.unlock();
+            // lock.unlock();
 
             while (!tmp_tasks.empty())
             {
