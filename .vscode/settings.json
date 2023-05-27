@@ -54,6 +54,8 @@
         "shared_mutex": "cpp",
         "stop_token": "cpp",
         "set": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "mutex": "cpp",
+        "thread": "cpp"
     }
 }

@@ -35,3 +35,35 @@ Thread id
 Logger 日志器
 1.提供打印日志的方法
 2.设置日志的输出路径
+
+
+### 2.4 Reactors
+事件循环器
+```c++{.line-numbers}
+void loop{
+    while (!stop){
+        foreach(task in tasks){
+            task;
+        }
+        
+        //1.取得下次定时任务的时间，与设定timeout取最大值，若下次定时任务时间超过1s就取下次定时任务时间为超时，否者为1s
+        int time_out = Max(1000,getNextTimerCallback());
+        //2.调用Epoll等待时间的发生，超时时间为上述的timeOut
+        int rt = epoll_wait(epfd,fds,....,time_out);
+        if(rt < 0>){
+            //epoll 调用失效。。。
+        } else {
+            if(rt >0 ){
+                foreach(fd in fds){
+                    tasks.push(fd);
+                }
+            }
+        }
+
+        
+    }
+}
+```
+
+
+在rocket中，使用的是主从Reactor模型
