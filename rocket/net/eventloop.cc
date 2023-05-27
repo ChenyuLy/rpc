@@ -83,6 +83,7 @@ namespace rocket
             ScopeMutext<Mutex> lock(m_mutex);
             std::queue<std::function<void()>> tmp_tasks ;
             m_pending_tasks.swap(tmp_tasks);
+            
             lock.unlock();
 
             while (!tmp_tasks.empty())
@@ -170,9 +171,9 @@ namespace rocket
     }
     void EventLoop::addTask(std::function<void()> cb, bool is_wake_up )
     {
-        DEBUGLOG("befor push 1");
+        // DEBUGLOG("befor push 1");
         // ScopeMutext<Mutex> lock(m_mutex);
-        DEBUGLOG("befor push 2");
+        // DEBUGLOG("befor push 2");
         m_pending_tasks.push(cb);
         // lock.unlock();
 
