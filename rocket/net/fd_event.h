@@ -15,7 +15,7 @@ namespace rocket
             OUT_EVENT = EPOLLOUT,
         };
 
-
+        FdEvent();
         FdEvent(int fd);
 
         ~FdEvent();

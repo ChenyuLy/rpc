@@ -63,6 +63,7 @@ namespace rocket
 
 
         initWakeUpFdEvent();
+        initTimer();
         INFOLOG("succ create event loop in thread % d", m_thread_id);
         t_current_eventloop = this;
     }
@@ -73,6 +74,10 @@ namespace rocket
         if(m_wakeup_fd_event){
             delete m_wakeup_fd_event;
             m_wakeup_fd_event =nullptr;
+        }
+        if(m_timer){
+            delete m_timer;
+            m_timer= NULL   ;
         }
     }
 
@@ -93,6 +98,11 @@ namespace rocket
                     cb();
                 }
             }
+            //如果有定时任务需要执行那么执行
+            //1 怎么判断定时人物需要执行？ now -> TinmeEvent.arrtive_time
+            //2.arrtive_time r如何监听 eventloop 监听
+            //
+
             int timeout = g_epoll_max_timeout;
             epoll_event result_events[g_epoll_max_events];
             DEBUGLOG("now begin to epoll_wait");
@@ -184,6 +194,10 @@ namespace rocket
         }
         DEBUGLOG("after wakeup");
     }
+    void EventLoop::addTimerEvent(TimerEvent::s_ptr event)
+    {
+        m_timer->addTimerEvent(event);
+    }
     void EventLoop::dealWakeup()
     {
     }
@@ -203,6 +217,12 @@ namespace rocket
             while (read(m_wakeup_fd, buf, 8) != -1 && errno == EAGAIN){};
             DEBUGLOG("read full bytes from wakeup fd[%d]", m_wakeup_fd); });
         addEpollEvent(m_wakeup_fd_event);
+    }
+
+    void EventLoop::initTimer()
+    {
+        m_timer = new Timer();
+        addEpollEvent(m_timer);
     }
 
 } // namespace rocket

@@ -67,3 +67,43 @@ void loop{
 
 
 在rocket中，使用的是主从Reactor模型
+
+服务器有一个mainReactor 和多个subReactor。
+mainReactor由主线程运行 他的作用如下：通过epoll监听listenfd的可读事件，当可读时间发生以后，调用accept函数获取clientfd,然后随即取出一个subReactor,将clientfd的读写时间注册
+到这个subReactor的epoll上即可。也就是说mainReactor只负责建立链接事件,不进行业务处理，也不关心已经链接套接字的IO事件。
+
+subReactor通常有多个，每个subReactor由一个线程来运行，subReactor的epoll中注册了clientfd的读写时间，当发了IO事件后，需要进行业务处理
+
+
+
+#### 2.4.1 TimerEvent 定时任务
+
+
+```
+1.指定时间点 arrive_time
+2.interval,ms; 
+3.isrepeated 是否是周期性的
+4.is_cancled
+5.task
+
+canle()
+cancleRepeated()
+```
+
+
+#### 2.4.2 Timer
+定时器 他是一个TimerEvent的集合
+Timer 继承FdEvent
+
+
+‘’‘
+addTimeEvent();
+deleteTimerEvent();
+onTimer();//发生IO以后需要执行的方法
+reserArriveTime(); 
+
+mutimap 存储 TimerEvent <key(arrivetime),TimerEvent>
+
+
+
+’‘’

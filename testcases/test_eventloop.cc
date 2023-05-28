@@ -4,9 +4,12 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <memory>
 #include "rocket/common/log.h"
 #include "rocket/common/config.h"
 #include "rocket/net/eventloop.h"
+#include "rocket/net/timer.h"
+#include "rocket/net/timer_event.h"
 
 int main(int argc, char const *argv[])
 {
@@ -51,6 +54,12 @@ int main(int argc, char const *argv[])
     });
     
     eventloop->addEpollEvent(&event);
+    int i = 0;
+    rocket::TimerEvent::s_ptr timer_event = std::make_shared<rocket::TimerEvent>(1000,true,[&i](){
+        INFOLOG("trigger timer event, count = %d",i++);
+    });
+
+    eventloop->addTimerEvent(timer_event);
     eventloop -> loop();
     return 0;
 }
