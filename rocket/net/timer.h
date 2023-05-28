@@ -3,7 +3,8 @@
 #include <map>
 #include "rocket/net/fd_event.h"
 #include "rocket/net/timer_event.h"
-#include "rocket/common/mutex.h"
+// #include "rocket/common/mutex.h"
+#include <mutex>
 
 namespace rocket
 {
@@ -11,7 +12,8 @@ namespace rocket
     {
     private:
         std::multimap<int64_t, TimerEvent::s_ptr> m_pending_events;
-        Mutex m_mutex;
+        // Mutex m_mutex;
+        std::mutex m_mutex;
 
         void resetArriveTime();
         

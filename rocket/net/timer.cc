@@ -8,8 +8,9 @@ namespace rocket
     void Timer::resetArriveTime() ////看不懂下来看
     {
         // ScopeMutext<Mutex> lock(m_mutex);
+        std::unique_lock<std::mutex> lock(m_mutex);
         auto tmp = m_pending_events;
-        // lock.unlock();
+        lock.unlock();
 
         if (tmp.empty())
         {
@@ -61,6 +62,7 @@ namespace rocket
     {
         bool is_reset_timerfd = false;
         // ScopeMutext<Mutex> lock(m_mutex);
+        std::unique_lock<std::mutex> lock(m_mutex);
         if (m_pending_events.empty())
         {
             is_reset_timerfd = true;
@@ -74,7 +76,7 @@ namespace rocket
             }
         }
         m_pending_events.emplace(event->getArriveTime(), event);
-        // lock.unlock();
+        lock.unlock();
         if (is_reset_timerfd)
         {
             resetArriveTime();
@@ -85,6 +87,7 @@ namespace rocket
         event->setCancler(true);
 
         // ScopeMutext<Mutex> lock(m_mutex);
+        std::unique_lock<std::mutex> lock(m_mutex);
         auto begin = m_pending_events.lower_bound(event->getArriveTime()); // 下来看
         auto end = m_pending_events.upper_bound(event->getArriveTime());
 
@@ -100,7 +103,7 @@ namespace rocket
         {
             m_pending_events.erase(it);
         }
-        // lock.unlock();
+        lock.unlock();//
         DEBUGLOG("success delete TE as arrive time %lld", event->getArriveTime());
     }
     void Timer::onTimer()
@@ -117,6 +120,7 @@ namespace rocket
         std::vector<TimerEvent::s_ptr> tmps;
         std::vector<std::pair<int64_t, std::function<void()>>> tasks;
         // ScopeMutext<Mutex> lock(m_mutex);
+        std::unique_lock<std::mutex> lock(m_mutex);
         auto it = m_pending_events.begin();
         for (it = m_pending_events.begin(); it != m_pending_events.end(); ++it)
         {
@@ -134,7 +138,7 @@ namespace rocket
         }
 
         m_pending_events.erase(m_pending_events.begin(),it);
-        // lock.unlock();
+        lock.unlock();
 
         //需要把重复的event事件再次添加
 
