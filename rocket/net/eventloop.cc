@@ -66,7 +66,7 @@ namespace rocket
         initTimer();
         INFOLOG("succ create event loop in thread % d", m_thread_id);
         t_current_eventloop = this;
-        DEBUGLOG("2222222222222222222222");
+        // DEBUGLOG("2222222222222222222222");
     }
 
     EventLoop::~EventLoop()
