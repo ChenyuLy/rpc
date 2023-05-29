@@ -66,6 +66,7 @@ namespace rocket
         initTimer();
         INFOLOG("succ create event loop in thread % d", m_thread_id);
         t_current_eventloop = this;
+        DEBUGLOG("2222222222222222222222");
     }
 
     EventLoop::~EventLoop()
@@ -105,6 +106,7 @@ namespace rocket
 
             int timeout = g_epoll_max_timeout;
             epoll_event result_events[g_epoll_max_events];
+            
             DEBUGLOG("now begin to epoll_wait");
             int rt = epoll_wait(m_epoll_fd, result_events, g_epoll_max_events, timeout);
             DEBUGLOG("now end to epoll_wait,rt = %d",rt);
@@ -142,6 +144,7 @@ namespace rocket
 
     void EventLoop::stop()
     {
+        m_stop_flag = true;
     }
 
     void EventLoop::addEpollEvent(FdEvent *event)

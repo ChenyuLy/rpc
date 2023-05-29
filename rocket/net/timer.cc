@@ -5,7 +5,7 @@
 #include <string.h>
 namespace rocket
 {
-    void Timer::resetArriveTime() ////看不懂下来看
+    void Timer::resetArriveTime() 
     {
         // ScopeMutext<Mutex> lock(m_mutex);
         std::unique_lock<std::mutex> lock(m_mutex);
