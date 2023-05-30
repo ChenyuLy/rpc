@@ -1,3 +1,29 @@
+安装protobuf地址：https://blog.csdn.net/weixin_45312249/article/details/129186819
+tinyxml:https://sourceforge.net/projects/tinyxml/
+要生成 libtinyxml.a 静态库，需要简单修改 makefile 如下:
+```
+# 84 行修改为如下
+OUTPUT := libtinyxml.a 
+
+# 194, 105 行修改如下
+${OUTPUT}: ${OBJS}
+	${AR} $@ ${LDFLAGS} ${OBJS} ${LIBS} ${EXTRA_LIBS}
+```
+安装如下
+```
+cd tinyxml
+make -j4
+
+# copy 库文件到系统库文件搜索路径下
+cp libtinyxml.a /usr/lib/
+
+# copy 头文件到系统头文件搜索路径下 
+mkdir /usr/include/tinyxml
+cp *.h /usr/include/tinyxml
+```
+
+
+
 ### 日志模块开发
 首先需要创建项目：
 
