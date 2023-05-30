@@ -1,7 +1,7 @@
 #ifndef ROCKET_COMMON_LOG_H
 #define ROCKET_COMMON_LOG_H
 
-#include <string>
+#include <string.h>
 #include <queue>
 #include <memory>
 // #include <common/config.h>
@@ -15,12 +15,15 @@ namespace rocket
     std::string formatString(const char *str, Args &&...args)
     {
         int size = snprintf(nullptr, 0, str, args...);
-
+        // int size = strlen(str);
         std::string result;
         if (size > 0)
         {
             result.resize(size);
             snprintf(&result[0], size + 1, str, args...);
+            // memcpy(&result,)
+            // result = str;
+
         }
 
         return std::string(result);
