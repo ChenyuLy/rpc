@@ -201,6 +201,14 @@ namespace rocket
     {
         m_timer->addTimerEvent(event);
     }
+    EventLoop *EventLoop::GetCurrentEventLoop()
+    {
+        if(t_current_eventloop){
+            return t_current_eventloop;
+        }
+        t_current_eventloop = new EventLoop();
+        return t_current_eventloop;
+    }
     void EventLoop::dealWakeup()
     {
     }

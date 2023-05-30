@@ -63,14 +63,14 @@ namespace rocket
         //唤醒等待的线程
         
         sem_post(&thread->m_init_semaphore);
-        DEBUGLOG("IOTread %d create,wait start semaphore",&thread->m_thread_id);
+        DEBUGLOG("IOTread %d create,wait start semaphore",thread->m_thread_id);
         //让io线程等待，直到我们主动的启动
         sem_wait(&thread->m_start_semaphore);
-        DEBUGLOG("IOTread %d start loop",&thread->m_thread_id);
+        DEBUGLOG("IOTread %d start loop",thread->m_thread_id);
         
         thread->m_event_loop->loop();
         
-        DEBUGLOG("IOTread %d end loop",&thread->m_thread_id);
+        DEBUGLOG("IOTread %d end loop",thread->m_thread_id);
         return  NULL;
     }
 

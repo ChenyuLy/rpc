@@ -11,7 +11,7 @@ namespace rocket
     {
     private:
     public:
-            typedef std::shared_ptr<NetAddr> s_ptr;
+        typedef std::shared_ptr<NetAddr> s_ptr;
         virtual sockaddr *getSocketAddr() = 0;
         virtual socklen_t getSocketLen() = 0;
         virtual int intGetFamily() = 0;

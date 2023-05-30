@@ -1,5 +1,5 @@
-#ifndef ROCKET_NET_EVENTLOOP_H
-#define ROCKET_NET_EVENTLOOP_H
+#ifndef ROCKET_NET_BUFFER_H
+#define ROCKET_NET_BUFFER_H
 
 #include <vector>
 namespace rocket

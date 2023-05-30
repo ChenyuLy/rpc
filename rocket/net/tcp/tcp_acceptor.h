@@ -2,6 +2,7 @@
 #define ROCKET_NET_TCP_TCP_ACCEPTOR_H
 #include "rocket/net/tcp/net_addr.h"
 #include "rocket/common/log.h"
+#include <memory>
 
 namespace rocket
 {
@@ -12,10 +13,13 @@ namespace rocket
         int m_family{-1};
         int m_listenfd{-1};   //listenfd 监听套接字
     public:
+        typedef std::shared_ptr<TcpAcceptor> s_ptr;
+
         TcpAcceptor(NetAddr::s_ptr local_addr);
         ~TcpAcceptor();
 
         int accept();
+        int getListenFd();
     };
     
 

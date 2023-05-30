@@ -59,3 +59,9 @@ int rocket::TcpAcceptor::accept()
             //..
         }
     }
+
+    int rocket::TcpAcceptor::getListenFd()
+    {
+
+        return m_listenfd;
+    }
