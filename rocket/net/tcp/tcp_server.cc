@@ -29,21 +29,28 @@ void rocket::TCPServer::start()
 void rocket::TCPServer::init()
 {
     m_acceptor = std::make_shared<TcpAcceptor>(m_local_addr);
-    m_main_event_loop = EventLoop::GetCurrentEventLoop();
 
+    m_main_event_loop = EventLoop::GetCurrentEventLoop();
     m_io_thread_group = new IOThreadGroup(2);
+
     listen_fd_event = new FdEvent(m_acceptor->getListenFd());
     listen_fd_event->listen(FdEvent::IN_EVENT, std::bind(&TCPServer::onAccept, this));
+    
     m_main_event_loop->addEpollEvent(listen_fd_event);
 }
 
 void rocket::TCPServer::onAccept()
 {
-    int client_fd = m_acceptor->accept();
-    if(client_fd > 0)m_client_counts++;
+    auto re = m_acceptor->accept();
+    int client_fd = re.first;
+    NetAddr::s_ptr peer_addr = re.second;
+    if(client_fd > 0) m_client_counts++;
     //TODO:把client—fd添加到IO线程里面
-    // m_io_thread_group->getIOThread()->getEventLoop()->addEpollEvent();
+    IOThread* io_thread =m_io_thread_group->getIOThread();
+    TcpConnection::s_ptr connection = std::make_shared<TcpConnection> (io_thread,client_fd,128,peer_addr);
 
+    connection->setState(TcpConnection::TcpState::Connected);
+    m_client.insert(connection);
     INFOLOG("TCPServer succ get client fd=%d,",client_fd);
 
 }

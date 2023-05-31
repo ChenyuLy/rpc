@@ -21,6 +21,7 @@
     {                                                                                                              \
         ERRORLOG("failed epoll_ctl when add fd %d , errno=%d,error = %s", event->getFd(), errno, strerror(errno)); \
     }                                                                                                              \
+    m_listem_fds.erase(event->getFd());                                                                            \
     DEBUGLOG("delete event success,fd[%d]", event->getFd());
 
 #define ADD_TO_EPOLL()                                                                                             \
@@ -31,12 +32,13 @@
         op = EPOLL_CTL_MOD;                                                                                        \
     }                                                                                                              \
     epoll_event tmp = event->getEpollEvent();                                                                      \
-    INFOLOG("epoll_event.events = %d",(int)tmp.events);                                                            \
+    INFOLOG("epoll_event.events = %d", (int)tmp.events);                                                           \
     int rt = epoll_ctl(m_epoll_fd, op, event->getFd(), &tmp);                                                      \
     if (rt == -1)                                                                                                  \
     {                                                                                                              \
         ERRORLOG("failed epoll_ctl when add fd %d , errno=%d,error = %s", event->getFd(), errno, strerror(errno)); \
     }                                                                                                              \
+    m_listem_fds.insert(event->getFd());                                                                           \
     DEBUGLOG("add event success,fd[%d]", event->getFd());
 
 namespace rocket
@@ -61,7 +63,6 @@ namespace rocket
             exit(0);
         }
 
-
         initWakeUpFdEvent();
         initTimer();
         INFOLOG("succ create event loop in thread % d", m_thread_id);
@@ -72,13 +73,15 @@ namespace rocket
     EventLoop::~EventLoop()
     {
         close(m_epoll_fd);
-        if(m_wakeup_fd_event){
+        if (m_wakeup_fd_event)
+        {
             delete m_wakeup_fd_event;
-            m_wakeup_fd_event =nullptr;
+            m_wakeup_fd_event = nullptr;
         }
-        if(m_timer){
+        if (m_timer)
+        {
             delete m_timer;
-            m_timer= NULL   ;
+            m_timer = NULL;
         }
     }
 
@@ -87,7 +90,7 @@ namespace rocket
         while (!m_stop_flag)
         {
             // ScopeMutext<Mutex> lock(m_mutex);
-            rocket::SafeQueue<std::function<void()>> tmp_tasks ;
+            rocket::SafeQueue<std::function<void()>> tmp_tasks;
             m_pending_tasks.swap(tmp_tasks);
             // lock.unlock();
 
@@ -95,21 +98,22 @@ namespace rocket
             {
                 std::function<void()> cb = tmp_tasks.front();
                 tmp_tasks.pop();
-                if(cb){
+                if (cb)
+                {
                     cb();
                 }
             }
-            //如果有定时任务需要执行那么执行
-            //1 怎么判断定时人物需要执行？ now -> TinmeEvent.arrtive_time
-            //2.arrtive_time r如何监听 eventloop 监听
+            // 如果有定时任务需要执行那么执行
+            // 1 怎么判断定时人物需要执行？ now -> TinmeEvent.arrtive_time
+            // 2.arrtive_time r如何监听 eventloop 监听
             //
 
             int timeout = g_epoll_max_timeout;
             epoll_event result_events[g_epoll_max_events];
-            
+
             DEBUGLOG("now begin to epoll_wait");
             int rt = epoll_wait(m_epoll_fd, result_events, g_epoll_max_events, timeout);
-            DEBUGLOG("now end to epoll_wait,rt = %d",rt);
+            DEBUGLOG("now end to epoll_wait,rt = %d", rt);
             if (rt < 0)
             {
                 ERRORLOG("epoll_wait error,errno=%d", errno);
@@ -124,12 +128,12 @@ namespace rocket
                         continue;
                     if (trigger_event.events & EPOLLIN)
                     {
-                        DEBUGLOG("fd %d trigger EPOLLIN event",fd_event->getFd());
+                        DEBUGLOG("fd %d trigger EPOLLIN event", fd_event->getFd());
                         addTask(fd_event->handler(FdEvent::IN_EVENT));
                     }
                     if (trigger_event.events & EPOLLOUT)
                     {
-                        DEBUGLOG("fd %d trigger EPOLLOUT event",fd_event->getFd());
+                        DEBUGLOG("fd %d trigger EPOLLOUT event", fd_event->getFd());
                         addTask(fd_event->handler(FdEvent::OUT_EVENT));
                     }
                 }
@@ -157,10 +161,12 @@ namespace rocket
         {
             auto cb = [this, event]()
             {
+                DEBUGLOG("in else");
                 ADD_TO_EPOLL();
             };
             addTask(cb, true);
         }
+        // ADD_TO_EPOLL();
     }
     void EventLoop::deleteEpollEvent(FdEvent *event)
     {
@@ -181,7 +187,7 @@ namespace rocket
     {
         return getThreadId() == m_thread_id;
     }
-    void EventLoop::addTask(std::function<void()> cb, bool is_wake_up )
+    void EventLoop::addTask(std::function<void()> cb, bool is_wake_up)
     {
         // DEBUGLOG("befor push 1");
         // ScopeMutext<Mutex> lock(m_mutex);
@@ -189,13 +195,13 @@ namespace rocket
         m_pending_tasks.push(cb);
         // lock.unlock();
 
-        DEBUGLOG("after push ");
+        // DEBUGLOG("after push ");
         if (is_wake_up)
         {
             DEBUGLOG("wakeup");
             wakeup();
         }
-        DEBUGLOG("after wakeup");
+        // DEBUGLOG("after wakeup");
     }
     void EventLoop::addTimerEvent(TimerEvent::s_ptr event)
     {
@@ -203,7 +209,8 @@ namespace rocket
     }
     EventLoop *EventLoop::GetCurrentEventLoop()
     {
-        if(t_current_eventloop){
+        if (t_current_eventloop)
+        {
             return t_current_eventloop;
         }
         t_current_eventloop = new EventLoop();
