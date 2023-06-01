@@ -32,21 +32,21 @@ namespace rocket
 #define DEBUGLOG(str, ...)                                                                                                                                                                                                 \
     if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Debug)                                                                                                                                                \
     {                                                                                                                                                                                                                      \
-        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Debug))->toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+        rocket::Logger::GetGlobgalLogger()->pushLog(rocket::LogEvent(rocket::LogLevel::Debug).toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
         rocket::Logger::GetGlobgalLogger()->log();                                                                                                                                                                         \
     }
 
 #define INFOLOG(str, ...)                                                                                                                                                                                                 \
     if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Info)                                                                                                                                                \
     {                                                                                                                                                                                                                     \
-        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Info))->toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+        rocket::Logger::GetGlobgalLogger()->pushLog(rocket::LogEvent(rocket::LogLevel::Info).toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
         rocket::Logger::GetGlobgalLogger()->log();                                                                                                                                                                        \
     }
 
 #define ERRORLOG(str, ...)                                                                                                                                                                                                 \
     if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Error)                                                                                                                                                \
     {                                                                                                                                                                                                                      \
-        rocket::Logger::GetGlobgalLogger()->pushLog((new rocket::LogEvent(rocket::LogLevel::Error))->toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+        rocket::Logger::GetGlobgalLogger()->pushLog(rocket::LogEvent(rocket::LogLevel::Error).toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
         rocket::Logger::GetGlobgalLogger()->log();                                                                                                                                                                         \
     }
 

@@ -3,8 +3,8 @@
 namespace rocket
 {
 
-    TcpConnection::TcpConnection(IOThread *io_thread, int fd, int buffer_size, NetAddr::s_ptr peer_addr)
-        : m_io_thread(io_thread), m_fd(fd), m_peer_addr(peer_addr), m_stat(NotConnected)
+    TcpConnection::TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr)
+        : m_event_loop(event_loop), m_fd(fd), m_peer_addr(peer_addr), m_stat(NotConnected)
     {
         m_in_buffer = std::make_shared<TcpBuffer>(buffer_size);
         m_out_buffer = std::make_shared<TcpBuffer>(buffer_size);
@@ -12,12 +12,17 @@ namespace rocket
         m_fd_event = FdEventGroup::GetFdEventGroup()->getFdEvent(fd);
         m_fd_event->setNonBlock();
         m_fd_event->listen(FdEvent::IN_EVENT, std::bind(&TcpConnection::onRead, this));
-        io_thread->getEventLoop()->addEpollEvent(m_fd_event);
+        m_event_loop->addEpollEvent(m_fd_event);
     }
 
     TcpConnection::~TcpConnection()
     {
         DEBUGLOG("~TcpConnection");
+    }
+
+    void TcpConnection::setConnectionType(TcpConnectionType type)
+    {
+        m_connection_type = type;
     }
 
     void TcpConnection::onRead()
@@ -71,6 +76,7 @@ namespace rocket
 
             DEBUGLOG("peer closed,peer addr [%s],client fd[%d] ", m_peer_addr->toString().c_str(), m_fd);
             clear();
+            return ; 
         }
 
         if (!is_read_all)
@@ -100,7 +106,7 @@ namespace rocket
         m_out_buffer->writeToBuffer(msg.c_str(), msg.length());
         m_fd_event->listen(FdEvent::OUT_EVENT, std::bind(&TcpConnection::onWrite, this));
 
-        m_io_thread->getEventLoop()->addEpollEvent(m_fd_event);
+        m_event_loop->addEpollEvent(m_fd_event);
     }
 
     void TcpConnection::onWrite()
@@ -142,7 +148,8 @@ namespace rocket
         if (is_write_all)
         {
             m_fd_event->cancle(FdEvent::OUT_EVENT);
-            m_io_thread->getEventLoop()->deleteEpollEvent(m_fd_event);
+            // m_io_thread->getEventLoop()->deleteEpollEvent(m_fd_event);
+            m_event_loop->addEpollEvent(m_fd_event);
         }
     }
 
@@ -171,8 +178,9 @@ namespace rocket
         {
             return;
         }
-
-        m_io_thread->getEventLoop()->deleteEpollEvent(m_fd_event);
+        m_fd_event->cancle(FdEvent::IN_EVENT);
+        m_fd_event->cancle(FdEvent::OUT_EVENT);
+        m_event_loop->deleteEpollEvent(m_fd_event);
 
         m_stat = Closed;
     }

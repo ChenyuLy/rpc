@@ -21,8 +21,13 @@ namespace rocket
             Closed = 4
         };
 
+        enum TcpConnectionType{
+            TcpConnectionByServer = 1,  //作为服务端使用，带便对端客户端的链接
+            TcpConnectionByClient = 2,  //作为客户端使用，带便对端服务端的链接
+        };
     private:
-        IOThread *m_io_thread{NULL}; // 代表持有该链接的io线程
+        EventLoop* m_event_loop{NULL}; // 代表持有该链接的io线程
+
         NetAddr::s_ptr m_local_addr;
         NetAddr::s_ptr m_peer_addr;
 
@@ -35,8 +40,11 @@ namespace rocket
         int m_fd{0};
 
     public:
-        TcpConnection(IOThread *io_thread, int fd, int buffer_size, NetAddr::s_ptr peer_addr);
+        // TcpConnection(IOThread *io_thread, int fd, int buffer_size, NetAddr::s_ptr peer_addr);
+        TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr);
         ~TcpConnection();
+
+        void setConnectionType(TcpConnectionType type);
 
         void onRead();
 
@@ -53,6 +61,8 @@ namespace rocket
         void clear();
 
         void shutdown(); // 主动关闭
+
+        TcpConnectionType m_connection_type {TcpConnectionByServer};
     };
 
 }

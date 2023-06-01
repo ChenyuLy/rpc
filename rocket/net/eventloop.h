@@ -36,6 +36,9 @@ namespace rocket
 
        void initTimer();
 
+       bool m_is_looping{false};
+
+
     public:
         EventLoop();
         ~EventLoop();
@@ -58,6 +61,7 @@ namespace rocket
 
         static EventLoop* GetCurrentEventLoop();
         
+        bool isLooping();
     };
     
     
