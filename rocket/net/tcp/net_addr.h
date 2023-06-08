@@ -22,8 +22,9 @@ namespace rocket
     class IPNetAddr : public NetAddr
     {
     private:
+            std::string m_ip;
         uint16_t m_port{0};
-        std::string m_ip;
+
         sockaddr_in m_addr;
     public:
 

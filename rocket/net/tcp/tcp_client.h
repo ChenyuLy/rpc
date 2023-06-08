@@ -31,7 +31,7 @@ namespace rocket
 
                 //异步的发送massage
         //如果读取message成功会调用done函数，函数的参数是message对象
-        void readMessage(AbstractProtocal::s_ptr message,std::function<void(AbstractProtocal::s_ptr)> done);
+        void readMessage(const std::string& req_id ,  std::function<void(AbstractProtocal::s_ptr)> done);
     };
 } // namespace rocket
 

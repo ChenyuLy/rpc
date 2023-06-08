@@ -6,6 +6,11 @@
 #include "rocket/net/io_thread.h"
 #include "rocket/net/fd_event_group.h"
 #include "rocket/common/log.h"
+#include "rocket/net/abstract_protocal.h"
+#include "rocket/net/string_coder.h"
+#include "rocket/net/abstract_coder.h"
+#include <map>
+#include <queue>
 #include <unistd.h>
 #include <memory>
 namespace rocket
@@ -27,7 +32,7 @@ namespace rocket
         };
     private:
         EventLoop* m_event_loop{NULL}; // 代表持有该链接的io线程
-
+        int m_fd{0};
         NetAddr::s_ptr m_local_addr;
         NetAddr::s_ptr m_peer_addr;
 
@@ -37,11 +42,11 @@ namespace rocket
         FdEvent *m_fd_event{NULL}; //
 
         TcpState m_stat;
-        int m_fd{0};
+        
 
     public:
         // TcpConnection(IOThread *io_thread, int fd, int buffer_size, NetAddr::s_ptr peer_addr);
-        TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr);
+        TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr,TcpConnectionType type = TcpConnectionByServer);
         ~TcpConnection();
 
         void setConnectionType(TcpConnectionType type);
@@ -62,7 +67,22 @@ namespace rocket
 
         void shutdown(); // 主动关闭
 
+        void listenWrite();//启动监听可写事件
+
+        void listenRead();//启动监听可du事件
+
+        void pushSendMessage(AbstractProtocal::s_ptr message,std::function<void(AbstractProtocal::s_ptr)> done);
+
+        void pushReadMessage(const std::string& req_id,std::function<void(AbstractProtocal::s_ptr)> done);
+
         TcpConnectionType m_connection_type {TcpConnectionByServer};
+
+        
+        std::vector<std::pair<AbstractProtocal::s_ptr,std::function<void(AbstractProtocal::s_ptr)>>> m_write_dones;
+        // key = AbstratProteocol.m_req_id
+        std::map<std::string,std::function<void(AbstractProtocal::s_ptr)>> m_read_dones;
+
+        AbstractCoder* m_coder {NULL};
     };
 
 }
