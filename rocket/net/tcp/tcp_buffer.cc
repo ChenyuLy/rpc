@@ -34,7 +34,7 @@ namespace rocket
 
     int TcpBuffer::writeIndex()
     {
-        return m_read_index;
+        return m_write_index;
     }
 
     void TcpBuffer::writeToBuffer(const char *buf, int size)
