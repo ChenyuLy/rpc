@@ -14,7 +14,7 @@ namespace rocket
         }
 
         m_fd_event = FdEventGroup::GetFdEventGroup()->getFdEvent(m_fd);
-        m_connection = std::make_shared<TcpConnection>(m_event_loop, m_fd, 128, peer_addr,TcpConnection::TcpConnectionType::TcpConnectionByClient);
+        m_connection = std::make_shared<TcpConnection>(m_event_loop, m_fd, 128, peer_addr,nullptr,TcpConnection::TcpConnectionType::TcpConnectionByClient);
         m_connection->setConnectionType(TcpConnection::TcpConnectionType::TcpConnectionByClient);
     }
 

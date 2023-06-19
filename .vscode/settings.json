@@ -60,5 +60,6 @@
         "*.inc": "cpp",
         "cstring": "cpp",
         "unordered_set": "cpp"
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

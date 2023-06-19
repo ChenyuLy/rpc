@@ -10,6 +10,7 @@
 // #include "rocket/net/coder/string_coder.h"
 #include "rocket/net/coder/string_coder.h"
 #include "rocket/net/coder/abstract_coder.h"
+#include "rocket/net/rpc/rpc_dispatcher.h"
 #include <map>
 #include <queue>
 #include <unistd.h>
@@ -48,7 +49,7 @@ namespace rocket
 
     public:
         // TcpConnection(IOThread *io_thread, int fd, int buffer_size, NetAddr::s_ptr peer_addr);
-        TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr,TcpConnectionType type = TcpConnectionByServer);
+        TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr,NetAddr::s_ptr m_local_addr,TcpConnectionType type = TcpConnectionByServer);
         ~TcpConnection();
 
         void setConnectionType(TcpConnectionType type);
@@ -77,6 +78,9 @@ namespace rocket
 
         void pushReadMessage(const std::string& req_id,std::function<void(AbstractProtocal::s_ptr)> done);
 
+        NetAddr::s_ptr getLocalAddr();
+        NetAddr::s_ptr getPeerAddr();
+
         TcpConnectionType m_connection_type {TcpConnectionByServer};
 
         
@@ -85,6 +89,10 @@ namespace rocket
         std::map<std::string,std::function<void(AbstractProtocal::s_ptr)>> m_read_dones;
 
         AbstractCoder* m_coder {NULL};
+
+
+        std::shared_ptr<RpcDispatcher> m_dispatcher;
+
     };
 
 }

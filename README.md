@@ -144,3 +144,15 @@ class{
     EventLoop event_loop;
 }
 ```
+
+RPC服务端流程
+```
+启动的时候就注册OrderServive 对象
+
+1.注册orderservice 对象。
+2.从buffer读取数据，然后decode得到请求的TinyPBProtobol对象 从请求的TinyPBProtobol得到method_name，从orderservice 对象里更具service.method_name 找到方法 func
+3.总该带对于于不顾的 request type以及response type
+4.从请求的TinyPBProtobol将请求体里面的pb_date 反序列化为 request type的一个对象，声明一个空的response type 对象
+5.func（request，response）
+6.将repsonse 对象序列化为pb_date 在塞入道TinyPBProtobol结构体中 结构体中做encode塞入道buffer里面 就会发送回bao而来
+```
