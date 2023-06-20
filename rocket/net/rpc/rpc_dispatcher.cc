@@ -11,6 +11,17 @@
 
 namespace rocket
 {
+    static RpcDispatcher* g_rpc_dispatcher = NULL;
+
+    RpcDispatcher *RpcDispatcher::GetRpcDispatcher()
+    {
+        if(g_rpc_dispatcher != NULL){
+          return  g_rpc_dispatcher;
+        }
+        g_rpc_dispatcher = new RpcDispatcher;
+        return g_rpc_dispatcher;
+    }
+
     void RpcDispatcher::dispatch(AbstractProtocal::s_ptr request, AbstractProtocal::s_ptr response,TcpConnection* connection)
     {
         std::shared_ptr<TinyPBProtocal> req_protocol = std::dynamic_pointer_cast<TinyPBProtocal>(request);
@@ -22,7 +33,7 @@ namespace rocket
         rsp_protocol->m_req_id = req_protocol->m_req_id;
         rsp_protocol->m_method_name = req_protocol->m_method_name;
 
-        if(parseServiceFullName(method_full_name,service_name,method_name)){
+        if(!parseServiceFullName(method_full_name,service_name,method_name)){
             setTinyPBError(rsp_protocol,ERROR_PARSE_SERVICE_NAME,"parse service name error");
             return;
         }
@@ -68,7 +79,7 @@ namespace rocket
 
         service->CallMethod(method,&rpcController,req_msg,rsp_msg,NULL);
 
-        if(rsp_msg->SerializeToString(&(rsp_protocol->m_method_name))){
+        if(!rsp_msg->SerializeToString(&(rsp_protocol->m_method_name))){
             ERRORLOG("%s | serilize error ,origin message [%s]",req_protocol->m_req_id.c_str(), rsp_msg->ShortDebugString().c_str());
             setTinyPBError(rsp_protocol,ERROR_FAILED_SERIALIZE,"serilize error");
             if(req_msg != NULL) {

@@ -1,7 +1,7 @@
 #include "rocket/net/tcp/tcp_connection.h"
 #include "rocket/net/coder/tinypb_coder.h"
 #include "tcp_connection.h"
-
+#include "../rpc/rpc_dispatcher.h"
 namespace rocket
 {
 
@@ -17,7 +17,7 @@ namespace rocket
         if (m_connection_type == TcpConnectionByServer)
         {
             listenRead(); 
-            m_dispatcher = std::make_shared<RpcDispatcher>();
+            // m_dispatcher = std::make_shared<RpcDispatcher>();
         }
 
         m_coder = new TinyPBCoder();
@@ -121,7 +121,8 @@ namespace rocket
 
                 // message->m_pb_data = "hello . this is rocket rpc test data";
                 // message->m_req_id = result[i]->m_req_id;
-                m_dispatcher->dispatch(result[i],message,this);
+                
+                RpcDispatcher::GetRpcDispatcher()->dispatch(result[i],message,this);
                 replay_messages.emplace_back(message);
             }
             

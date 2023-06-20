@@ -91,7 +91,7 @@ namespace rocket
         AbstractCoder* m_coder {NULL};
 
 
-        std::shared_ptr<RpcDispatcher> m_dispatcher;
+        // std::shared_ptr<RpcDispatcher> m_dispatcher;
 
     };
 
