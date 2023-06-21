@@ -14,8 +14,8 @@ namespace rocket
 
 
         int32_t m_pk_len{0};
-        int32_t m_req_id_len{0};
-        // req_id 继承 fulei
+        int32_t m_msg_id_len{0};
+        // msg_id 继承 fulei
 
         int32_t m_method_name_len{0};
         std::string m_method_name;

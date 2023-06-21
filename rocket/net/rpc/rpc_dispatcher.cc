@@ -30,7 +30,7 @@ namespace rocket
         std::string service_name;
         std::string method_name;
 
-        rsp_protocol->m_req_id = req_protocol->m_req_id;
+        rsp_protocol->m_msg_id = req_protocol->m_msg_id;
         rsp_protocol->m_method_name = req_protocol->m_method_name;
 
         if(!parseServiceFullName(method_full_name,service_name,method_name)){
@@ -40,7 +40,7 @@ namespace rocket
 
         auto it = m_service_map.find(service_name);
         if(it == m_service_map.end()){
-            ERRORLOG("%s | service name[%s] not found",req_protocol->m_req_id.c_str(),service_name.c_str());
+            ERRORLOG("%s | service name[%s] not found",req_protocol->m_msg_id.c_str(),service_name.c_str());
             setTinyPBError(rsp_protocol,ERROR_PARSE_SERVICE_NAME,"service not found");
             return;
         }
@@ -48,7 +48,7 @@ namespace rocket
         service_s_ptr service = (*it).second;
         const google::protobuf::MethodDescriptor* method = service->GetDescriptor()->FindMethodByName(method_name);
         if(method == NULL){
-            ERRORLOG("%s | method name[%s] not found in service[%s]",req_protocol->m_req_id.c_str(),method_name.c_str(),service_name.c_str());
+            ERRORLOG("%s | method name[%s] not found in service[%s]",req_protocol->m_msg_id.c_str(),method_name.c_str(),service_name.c_str());
             setTinyPBError(rsp_protocol,ERROR_PARSE_SERVICE_NAME,"method not found");
             return;
         }
@@ -57,7 +57,7 @@ namespace rocket
         google::protobuf::Message* req_msg = service->GetRequestPrototype(method).New();
         //反序列化 ，将pbdata反序列化为req_msg
         if(!req_msg -> ParseFromString(req_protocol->m_pb_data)){
-            ERRORLOG("%s | deserilize error ",req_protocol->m_req_id.c_str(),method_name.c_str(),service_name.c_str());
+            ERRORLOG("%s | deserilize error ",req_protocol->m_msg_id.c_str(),method_name.c_str(),service_name.c_str());
             setTinyPBError(rsp_protocol,ERROR_FAILED_DESERIALIZE,"deserilize fail");
             if(req_msg != NULL) {
                 delete req_msg;
@@ -66,7 +66,7 @@ namespace rocket
             return;
         }
 
-        INFOLOG("%s | get rpc request[%s] get rpc request",req_protocol->m_req_id.c_str(),req_msg->ShortDebugString().c_str());
+        INFOLOG("%s | get rpc request[%s] get rpc request",req_protocol->m_msg_id.c_str(),req_msg->ShortDebugString().c_str());
 
         google::protobuf::Message* rsp_msg = service->GetResponsePrototype(method).New();
 
@@ -75,12 +75,12 @@ namespace rocket
         // IPNetAddr::s_ptr local_addr = std::make_shared<IPNetAddr>("127.0.0.1",1234);
         rpcController.SetLocalAddr(connection->getLocalAddr());
         rpcController.SetPeerAddr(connection->getPeerAddr());
-        rpcController.SetReqID(req_protocol->m_req_id);
+        rpcController.SetMsgId(req_protocol->m_msg_id);
 
         service->CallMethod(method,&rpcController,req_msg,rsp_msg,NULL);
 
         if(!rsp_msg->SerializeToString(&(rsp_protocol->m_method_name))){
-            ERRORLOG("%s | serilize error ,origin message [%s]",req_protocol->m_req_id.c_str(), rsp_msg->ShortDebugString().c_str());
+            ERRORLOG("%s | serilize error ,origin message [%s]",req_protocol->m_msg_id.c_str(), rsp_msg->ShortDebugString().c_str());
             setTinyPBError(rsp_protocol,ERROR_FAILED_SERIALIZE,"serilize error");
             if(req_msg != NULL) {
                 delete req_msg;
@@ -94,7 +94,7 @@ namespace rocket
         }
 
         rsp_protocol->m_err_code = 0;
-        INFOLOG("%s | dispath success , requesut[%s],response[%s]",req_protocol->m_req_id.c_str(),req_msg->ShortDebugString().c_str(),rsp_msg->ShortDebugString().c_str())
+        INFOLOG("%s | dispath success , requesut[%s],response[%s]",req_protocol->m_msg_id.c_str(),req_msg->ShortDebugString().c_str(),rsp_msg->ShortDebugString().c_str())
         delete req_msg;
         req_msg = NULL;
         delete rsp_msg;

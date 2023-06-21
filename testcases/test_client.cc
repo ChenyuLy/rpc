@@ -17,6 +17,8 @@
 #include "rocket/net/coder/abstract_protocal.h"
 #include "rocket/net/coder/tinypb_coder.h"
 #include "rocket/net/coder/tinypb_protocol.h"
+
+
 void test_connect()
 {
     // 调用connect 链接server
@@ -49,6 +51,7 @@ void test_connect()
     DEBUGLOG("success read %d bytes,[%s]", rt, std::string(buf).c_str());
 }
 
+
 void test_tcp_client()
 {
 
@@ -62,7 +65,7 @@ void test_tcp_client()
         std::shared_ptr< rocket::TinyPBProtocal>  message = std::make_shared<rocket::TinyPBProtocal>();
         message->m_pb_data = "test pb data";
 
-        message->m_req_id = "123456789";
+        message->m_msg_id = "123456789";
         client.writeMessage(message,[](rocket::AbstractProtocal::s_ptr msg_ptr ){
             DEBUGLOG("send message success");
         
@@ -70,7 +73,7 @@ void test_tcp_client()
 
         client.readMessage("123456789",[](rocket::AbstractProtocal::s_ptr msg_ptr ){
             std::shared_ptr<rocket::TinyPBProtocal> message = std::dynamic_pointer_cast<rocket::TinyPBProtocal>(msg_ptr);
-            DEBUGLOG("req_id[%s], get response %s",message->m_req_id.c_str(),message->m_pb_data.c_str());
+            DEBUGLOG("msg_id[%s], get response %s",message->m_msg_id.c_str(),message->m_pb_data.c_str());
         
         });
 
@@ -79,6 +82,12 @@ void test_tcp_client()
         
         // }); 
         });
+}
+
+
+
+void test_rpc_channel(){
+
 }
 
 int main()

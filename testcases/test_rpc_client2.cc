@@ -21,11 +21,7 @@
 #include "rocket/net/tcp/net_addr.h"
 #include "rocket/net/tcp/tcp_server.h"
 #include "rocket/net/rpc/rpc_dispatcher.h"
-#include "rocket/net/rpc/rpc_controller.h"
-#include "rocket/net/rpc/rpc_channel.h"
-#include "rocket/net/rpc/rpc_closure.h"
 #include "order.pb.h"
-#include <memory>
 
 void test_tcp_client()
 {
@@ -45,6 +41,7 @@ void test_tcp_client()
         makeOrderRequest request;
         request.set_price(100);
         request.set_goods("apple");
+
         if(!request.SerializeToString(&(message->m_pb_data))){
             ERRORLOG("serilize error");
             return;
@@ -76,31 +73,6 @@ void test_tcp_client()
         });
 }
 
-void test_rpc_channel(){
-    std::string ip = "127.0.0.1";
-    rocket::IPNetAddr::s_ptr addr = std::make_shared<rocket::IPNetAddr>(ip, 12345);
-    std::shared_ptr<rocket::RpcChannel> channel = std::make_shared<rocket::RpcChannel>(addr);
-
-    std::shared_ptr<makeOrderRequest> request = std::make_shared<makeOrderRequest>();
-    request->set_price(100);
-    request->set_goods("apple");
-
-    std::shared_ptr<makeOrderResponse> response = std::make_shared<makeOrderResponse>();
-
-    std::shared_ptr<rocket::RpcController> controller = std::make_shared<rocket::RpcController>();
-    controller->SetMsgId("99998888");
-
-    std::shared_ptr<rocket::RpcClosure> closure = std::make_shared<rocket::RpcClosure>([request,response](){
-        INFOLOG("call rpc sucess,request[%s],response[%s]",request->ShortDebugString().c_str(),response->ShortDebugString().c_str());
-    });
-
-    channel->Init(controller,response,request,closure);
-    Order_Stub stub(channel.get());
-
-    stub.makeOrder(controller.get(),request.get(),response.get(),closure.get());
-
-}
-
 int main()
 {
     rocket::Config::SetGlobelConfig("conf/rocket.xml");
@@ -110,7 +82,6 @@ int main()
     // rocket::RpcDispatcher::GetRpcDispatcher()->registerService(service);
 
 
-    // test_tcp_client();
     test_tcp_client();
     return 0;
 }

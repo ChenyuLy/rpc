@@ -41,7 +41,7 @@ namespace rocket
 
             std::shared_ptr<StringProtocal> msg= std::make_shared< StringProtocal>();
             msg->info = info;
-            msg->setReqId("123456");
+            msg->setMsgId("123456");
             out_messages.push_back(msg);
 
 
