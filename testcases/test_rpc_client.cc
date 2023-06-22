@@ -89,16 +89,17 @@ void test_rpc_channel(){
 
     std::shared_ptr<rocket::RpcController> controller = std::make_shared<rocket::RpcController>();
     controller->SetMsgId("99998888");
-
-    std::shared_ptr<rocket::RpcClosure> closure = std::make_shared<rocket::RpcClosure>([request,response](){
+    
+    std::shared_ptr<rocket::RpcClosure> closure = std::make_shared<rocket::RpcClosure>([request,response,channel]() mutable{
         INFOLOG("call rpc sucess,request[%s],response[%s]",request->ShortDebugString().c_str(),response->ShortDebugString().c_str());
+        INFOLOG("exit eventloop");
+        channel->getTcpClient()->stop();
+        channel.reset();
     });
 
     channel->Init(controller,response,request,closure);
     Order_Stub stub(channel.get());
-
     stub.makeOrder(controller.get(),request.get(),response.get(),closure.get());
-
 }
 
 int main()
@@ -111,6 +112,6 @@ int main()
 
 
     // test_tcp_client();
-    test_tcp_client();
+    test_rpc_channel();
     return 0;
 }

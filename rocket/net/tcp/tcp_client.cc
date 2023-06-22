@@ -95,4 +95,11 @@ namespace rocket
         m_connection->listenRead();
     }
 
+    void TcpClient::stop()
+    {
+        if(m_event_loop->isLooping()){
+            m_event_loop->stop();
+        }
+    }
+
 } // namespace rocket

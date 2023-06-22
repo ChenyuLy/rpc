@@ -7,6 +7,7 @@
 #include "rocket/net/tcp/tcp_connection.h"
 #include "rocket/net/coder/abstract_protocal.h"
 #include <unistd.h>
+#include <memory>
 namespace rocket
 {
     class TcpClient
@@ -23,6 +24,7 @@ namespace rocket
         TcpClient(NetAddr::s_ptr peer_addr);
         ~TcpClient();
 
+        typedef std::shared_ptr<TcpClient> s_ptr;
         //如果connect执行成功会执行 func
         void connect(std::function<void()> done);//异步执行connect
         //异步的发送massage
@@ -32,6 +34,8 @@ namespace rocket
                 //异步的发送massage
         //如果读取message成功会调用done函数，函数的参数是message对象
         void readMessage(const std::string& msg_id ,  std::function<void(AbstractProtocal::s_ptr)> done);
+
+        void stop();
     };
 } // namespace rocket
 

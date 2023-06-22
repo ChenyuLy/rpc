@@ -10,6 +10,7 @@ namespace rocket
 {
     RpcChannel::RpcChannel(NetAddr::s_ptr peer_addr):m_peer_addr(peer_addr)
     {
+        m_client  =  std::make_shared<TcpClient>(m_peer_addr);
     }
 
     RpcChannel::~RpcChannel()
@@ -72,12 +73,13 @@ namespace rocket
 
         s_ptr channel = shared_from_this();
 
-        TcpClient client(m_peer_addr);
-        client.connect([&client,req_protocal,channel]() mutable {
-            client.writeMessage(req_protocal,[&client,req_protocal,channel](AbstractProtocal::s_ptr )mutable{
-                INFOLOG("%s | ,send rpc requset success. call method name[%s], oringin request [%s]",
+        // TcpClient client(m_peer_addr);
+        channel->getTcpClient()->connect([req_protocal,channel]() mutable {
+            channel->getTcpClient()->writeMessage(req_protocal,[req_protocal,channel](AbstractProtocal::s_ptr )mutable{
+                INFOLOG("%s | ,send rpc requset success. call method name[%s]",
                 req_protocal->m_msg_id.c_str(),req_protocal->m_method_name.c_str());
-                client.readMessage(req_protocal->m_msg_id,[channel](AbstractProtocal::s_ptr msg) mutable{
+
+                channel->getTcpClient()->readMessage(req_protocal->m_msg_id,[channel](AbstractProtocal::s_ptr msg) mutable{
                     std::shared_ptr<rocket::TinyPBProtocal> rsp_protocol = std::dynamic_pointer_cast<rocket::TinyPBProtocal>(msg);
                     INFOLOG("%s |, success get rpc response, call method name[%s]",
                     rsp_protocol->m_msg_id.c_str(),rsp_protocol->m_method_name.c_str());
@@ -107,5 +109,9 @@ namespace rocket
     google::protobuf::Closure *RpcChannel::getClosure()
     {
         return m_closure.get();
+    }
+    TcpClient *RpcChannel::getTcpClient()
+    {
+        return m_client.get();
     }
 } // namespace rocket

@@ -4,6 +4,7 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/descriptor.h>
 #include "rocket/net/tcp/net_addr.h"
+#include "rocket/net/tcp/tcp_client.h"
 
 #include <memory>
 
@@ -29,6 +30,8 @@ namespace rocket
     google::protobuf::Message * getgResponse();
     google::protobuf::Closure * getClosure();
 
+    TcpClient* getTcpClient();
+
     RpcChannel(NetAddr::s_ptr peer_addr);
     ~RpcChannel();
     private:
@@ -41,6 +44,8 @@ namespace rocket
         message_s_ptr m_response {nullptr};
 
         bool m_is_init{false};
+
+        TcpClient::s_ptr m_client {nullptr};
 
     };
 } // namespace rocket
