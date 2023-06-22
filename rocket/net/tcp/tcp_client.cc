@@ -1,5 +1,7 @@
 #include "tcp_client.h"
 #include <string.h>
+#include "rocket/common/errcode.h"
+#include "rocket/net/tcp/net_addr.h"
 namespace rocket
 {
     TcpClient::TcpClient(NetAddr::s_ptr peer_addr) : m_peer_addr(peer_addr)
@@ -33,10 +35,12 @@ namespace rocket
         if (rt == 0)
         {
             DEBUGLOG("connect [%s] success 0", m_peer_addr->toString().c_str());
+            initLocalAddr();
             if (done)
             {
                 done();
             }
+            
             m_fd_event->cancle(FdEvent::OUT_EVENT);
             m_event_loop->addEpollEvent(m_fd_event);
         }
@@ -45,27 +49,67 @@ namespace rocket
             if (errno == EINPROGRESS)
             {
                 m_fd_event->listen(FdEvent::OUT_EVENT, [this, done](){
-                    int error = 0;
-                    socklen_t error_len = sizeof(error);
-                    getsockopt(m_fd,SOL_SOCKET,SO_ERROR,&error,&error_len);
-                    bool is_connect_succ = false;
-                    if(error == 0){
-                        DEBUGLOG("connect [%s] success 1",m_peer_addr->toString().c_str());
-                        is_connect_succ = true;
-                        m_connection->setState(TcpConnection::TcpState::Connected);
+                    int rt = ::connect(m_fd,m_peer_addr->getSocketAddr(),m_peer_addr->getSocketLen());
+                    if ((rt <0 && errno ==EISCONN ) || (rt == 0)){
+                    DEBUGLOG("connect [%s] success 1",m_peer_addr->toString().c_str());
+                    initLocalAddr();
+                    m_connection-> setState(TcpConnection::TcpState::Connected);
+                    } else {
+                        if(errno == ECONNREFUSED){
+                            this->m_connect_errcode = ERROR_PEER_CLOSED;
+                            this->m_connect_error_info = "connect refused , sys errno = " + std::string(strerror(errno)); 
+                        } else {
+                            this->m_connect_errcode = ERROR_FAILED_CONNECT;
+                            this->m_connect_error_info = "connect unkonwn , sys errno = " + std::string(strerror(errno));
+                        }
 
-                    } else{
                         ERRORLOG("connect error, errno = %d, error=%s",errno,strerror(errno));
+                        close(m_fd);
+                        m_fd = socket(m_peer_addr->intGetFamily(), SOCK_STREAM, 0);
                     }
-                    //链接完成后去掉可写触发
-                    m_fd_event->cancle(FdEvent::OUT_EVENT);
-                    m_event_loop->addEpollEvent(m_fd_event);
+        
 
+                    // int error = 0;
+                    // socklen_t error_len = sizeof(error);
+                    // getsockopt(m_fd,SOL_SOCKET,SO_ERROR,&error,&error_len);
+                    // // bool is_connect_succ = false;
+                    // if(error == 0){
+                    //     DEBUGLOG("connect [%s] success 1",m_peer_addr->toString().c_str());
+                    //     initLocalAddr();
+                    //     // is_connect_succ = true;
+                    //     m_connection->setState(TcpConnection::TcpState::Connected);
+
+                    // } 
+                    // // else if(errno == EINPROGRESS){
+                    // //     DEBUGLOG("connect [%s] in progress",m_peer_addr->toString().c_str());
+                    // //     return;
+                    // // }
+                    // else
+                    // {
+                    //     this->m_connect_errcode = ERROR_FAILED_CONNECT;
+                    //     this->m_connect_error_info = "connect error , sys errno = " + std::string(strerror(errno));
+                    //     ERRORLOG("connect error, errno = %d, error=%s",errno,strerror(errno));
+                    // }
+                    //链接完成后去掉可写触发
+                    // m_fd_event->cancle(FdEvent::OUT_EVENT);
+                    // m_event_loop->addEpollEvent(m_fd_event);
+                    m_event_loop->deleteEpollEvent(m_fd_event);
                     //如果链接成功才会执行回调函数
-                    if(done&& is_connect_succ){
+                    if(done){
                             
                             done();
                     } 
+                },[this,done](){
+                    m_fd_event->cancle(FdEvent::OUT_EVENT);
+                    m_event_loop->addEpollEvent(m_fd_event);
+                    if(errno == ECONNREFUSED){
+                        this->m_connect_errcode = ERROR_FAILED_CONNECT;
+                        this->m_connect_error_info = "connect refused , sys errno = " + std::string(strerror(errno));
+                    } else{
+                        this->m_connect_errcode = ERROR_FAILED_CONNECT;
+                        this->m_connect_error_info = "connect unkonw error , sys errno = " + std::string(strerror(errno));
+                    }
+                    ERRORLOG("connect error, errno = %d, error=%s",errno,strerror(errno));
                 });
 
                 m_event_loop->addEpollEvent(m_fd_event);
@@ -75,6 +119,11 @@ namespace rocket
             else
             {
                 ERRORLOG("connect error, errno = %d, error=%s", errno, strerror(errno));
+                this->m_connect_errcode = ERROR_FAILED_CONNECT;
+                this->m_connect_error_info = "connect error , sys errno = " + std::string(strerror(errno));
+                if(done){
+                    done();
+                }
             }
         }
     }
@@ -100,6 +149,39 @@ namespace rocket
         if(m_event_loop->isLooping()){
             m_event_loop->stop();
         }
+    }
+
+    int TcpClient::getConnectErrorCode()
+    {
+        return m_connect_errcode;
+    }
+
+    std::string TcpClient::getConnectErrorInfo()
+    {
+        return m_connect_error_info;
+    }
+
+    NetAddr::s_ptr TcpClient::getPeerAddr()
+    {
+        return  m_peer_addr;
+    }
+
+    NetAddr::s_ptr TcpClient::getLocalAddr()
+    {
+        return m_local_addr;
+    }
+
+    void TcpClient::initLocalAddr()
+    {
+        sockaddr_in local_addr;
+        socklen_t len = sizeof(local_addr);
+
+        int ret = getsockname(m_fd,reinterpret_cast<sockaddr*>(&local_addr),&len);
+        if(ret != 0) {
+            ERRORLOG("initLocalAddr error , getsockname error . errno = %d, error = %s",errno,strerror(errno));
+        }
+
+        m_local_addr = std::make_shared<IPNetAddr>(local_addr);
     }
 
 } // namespace rocket

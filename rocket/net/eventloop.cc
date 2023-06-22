@@ -137,6 +137,19 @@ namespace rocket
                         DEBUGLOG("fd %d trigger EPOLLOUT event", fd_event->getFd());
                         addTask(fd_event->handler(FdEvent::OUT_EVENT));
                     }
+                    // if(!(trigger_event.events & EPOLLIN) && (trigger_event.events & EPOLLOUT)){
+                    //     int evbent = (int)(trigger_event.events);
+                    //     DEBUGLOG("Unknow event = %s",evbent);
+                    // }
+                    if(trigger_event.events & EPOLLERR){
+                        DEBUGLOG("fd %d trigger EPOLLERR event", fd_event->getFd());
+                        deleteEpollEvent(fd_event);
+
+                        if(fd_event -> handler(FdEvent::ERR_EVENT) != nullptr){
+                            DEBUGLOG("fd %d add error callback", fd_event->getFd());
+                            addTask(fd_event->handler(FdEvent::OUT_EVENT));
+                        }
+                    }
                 }
             }
         }
