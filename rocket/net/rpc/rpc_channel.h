@@ -5,6 +5,7 @@
 #include <google/protobuf/descriptor.h>
 #include "rocket/net/tcp/net_addr.h"
 #include "rocket/net/tcp/tcp_client.h"
+#include "rocket/net/timer_event.h"
 
 #include <memory>
 
@@ -31,6 +32,7 @@ namespace rocket
     google::protobuf::Closure * getClosure();
 
     TcpClient* getTcpClient();
+    TimerEvent::s_ptr getTimerEvent();
 
     RpcChannel(NetAddr::s_ptr peer_addr);
     ~RpcChannel();
@@ -46,6 +48,7 @@ namespace rocket
         bool m_is_init{false};
 
         TcpClient::s_ptr m_client {nullptr};
+        TimerEvent::s_ptr m_timer_event{nullptr};
 
     };
 } // namespace rocket

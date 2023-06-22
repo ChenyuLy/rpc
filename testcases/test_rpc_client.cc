@@ -90,8 +90,20 @@ void test_rpc_channel(){
     std::shared_ptr<rocket::RpcController> controller = std::make_shared<rocket::RpcController>();
     controller->SetMsgId("99998888");
     
-    std::shared_ptr<rocket::RpcClosure> closure = std::make_shared<rocket::RpcClosure>([request,response,channel]() mutable{
-        INFOLOG("call rpc sucess,request[%s],response[%s]",request->ShortDebugString().c_str(),response->ShortDebugString().c_str());
+    std::shared_ptr<rocket::RpcClosure> closure = std::make_shared<rocket::RpcClosure>([request,response,channel,controller]() mutable{
+        if(controller->GetErrorCode()==0){
+            INFOLOG("call rpc sucess,request[%s],response[%s]",request->ShortDebugString().c_str(),response->ShortDebugString().c_str());
+            //业务逻辑
+            if(response->order_id() == "xxx"){
+
+            }  
+        } else{
+            INFOLOG("call rpc faile,request[%s],error code[%d] , error indo [%s]",
+                request->ShortDebugString().c_str(),
+                controller->GetErrorCode(),
+                controller->GetErrorInfo().c_str());
+        }
+        
         INFOLOG("exit eventloop");
         channel->getTcpClient()->stop();
         channel.reset();
@@ -99,6 +111,9 @@ void test_rpc_channel(){
 
     channel->Init(controller,response,request,closure);
     Order_Stub stub(channel.get());
+
+
+    // controller->setTimeout(5000);
     stub.makeOrder(controller.get(),request.get(),response.get(),closure.get());
 }
 

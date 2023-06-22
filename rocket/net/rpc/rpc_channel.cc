@@ -5,6 +5,7 @@
 #include "rocket/net/tcp/tcp_client.h"
 #include "rpc_controller.h"
 #include "rocket/common/errcode.h"
+#include "rocket/net/timer_event.h"
 
 namespace rocket
 {
@@ -73,7 +74,18 @@ namespace rocket
 
         s_ptr channel = shared_from_this();
 
-        // TcpClient client(m_peer_addr);
+        m_timer_event= std::make_shared<TimerEvent>(my_controller->GetTimeout(),false,[my_controller,channel]()mutable{
+            my_controller->StartCancel();
+            my_controller->SetError(ERROR_RPC_CALL_TIMEOUT,"rpc call timeout" + std::to_string(my_controller->GetTimeout()));
+
+            if (channel->getClosure()){
+                channel->getClosure()->Run();
+            }
+            channel.reset();
+        });
+
+        m_client->addTimerEvent(m_timer_event);
+
         channel->getTcpClient()->connect([req_protocal,channel]() mutable {
             RpcController* my_controller = dynamic_cast<RpcController*>(channel->getController());
             if(channel->getTcpClient()->getConnectErrorCode() != 0){
@@ -83,8 +95,6 @@ namespace rocket
                 ,my_controller->GetErrorInfo().c_str(),channel->getTcpClient()->getPeerAddr()->toString().c_str());
                 return;
             }
-
-
 
             channel->getTcpClient()->writeMessage(req_protocal,[req_protocal,channel,my_controller](AbstractProtocal::s_ptr )mutable{
                 INFOLOG("%s | ,send rpc requset success. call method name[%s],peer addr[%s],local addr[%s]",
@@ -96,6 +106,8 @@ namespace rocket
                     INFOLOG("%s |, success get rpc response, call method name[%s],peer addr[%s],local addr[%s]",
                     rsp_protocol->m_msg_id.c_str(),rsp_protocol->m_method_name.c_str(),
                     channel->getTcpClient()->getPeerAddr()->toString().c_str(),channel->getTcpClient()->getLocalAddr()->toString().c_str());
+
+                    channel->getTimerEvent()->setCancler(true);
 
                     // RpcController* my_controller = dynamic_cast<RpcController*>(channel->getController());
                     // rsp_protocol->m_pb_data
@@ -114,8 +126,13 @@ namespace rocket
                         return ;
                     }
                     INFOLOG("%s | call rpc success,call method name[%s],peer addr[%s],local addr[%s]",rsp_protocol->m_msg_id.c_str(),rsp_protocol->m_method_name.c_str(),
-                    channel->getTcpClient()->getPeerAddr()->toString().c_str(),channel->getTcpClient()->getLocalAddr()->toString().c_str())
-                    if(channel->getClosure()){
+                    channel->getTcpClient()->getPeerAddr()->toString().c_str(),channel->getTcpClient()->getLocalAddr()->toString().c_str());
+                    
+
+                    
+
+
+                    if(channel->getClosure() && !my_controller->IsCanceled()){
                         channel->getClosure()->Run();
                     }
                     channel.reset();
@@ -144,5 +161,9 @@ namespace rocket
     TcpClient *RpcChannel::getTcpClient()
     {
         return m_client.get();
+    }
+    TimerEvent::s_ptr RpcChannel::getTimerEvent()
+    {
+        return m_timer_event;
     }
 } // namespace rocket
