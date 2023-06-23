@@ -4,9 +4,13 @@
 #include <string.h>
 #include <queue>
 #include <memory>
+#include<semaphore.h>
+#include <condition_variable>
+#include <mutex>
 // #include <common/config.h>
 #include "rocket/common/config.h"
 #include "rocket/common/mutex.h"
+#include "rocket/net/timer_event.h"
 
 namespace rocket
 {
@@ -33,21 +37,18 @@ namespace rocket
     if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Debug)                                                                                                                                                \
     {                                                                                                                                                                                                                      \
         rocket::Logger::GetGlobgalLogger()->pushLog(rocket::LogEvent(rocket::LogLevel::Debug).toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
-        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                                                                         \
     }
 
 #define INFOLOG(str, ...)                                                                                                                                                                                                 \
     if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Info)                                                                                                                                                \
     {                                                                                                                                                                                                                     \
         rocket::Logger::GetGlobgalLogger()->pushLog(rocket::LogEvent(rocket::LogLevel::Info).toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
-        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                                                                        \
     }
 
 #define ERRORLOG(str, ...)                                                                                                                                                                                                 \
     if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Error)                                                                                                                                                \
     {                                                                                                                                                                                                                      \
         rocket::Logger::GetGlobgalLogger()->pushLog(rocket::LogEvent(rocket::LogLevel::Error).toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
-        rocket::Logger::GetGlobgalLogger()->log();                                                                                                                                                                         \
     }
 
     enum LogLevel
@@ -61,13 +62,62 @@ namespace rocket
     std::string LogLevelToString(LogLevel level);
     LogLevel StringToLoglevel(const std::string &log_level);
 
+
+    class AsyncLogger
+    {
+    private:
+        // m_file_path/m_file_name_yyyymmdd.m_no
+        std::string m_file_name; //日志输出的名字
+        std::string m_file_path; //日志和i输出路径
+        int m_max_file_size {0}; //
+
+        std::queue<std::vector<std::string>> m_buffer;
+
+        sem_t m_sempahore;
+        pthread_t m_thread;
+
+        // pthread_cond_t m_condtion; //tiaoji bianliang
+        std::condition_variable m_condtion;
+
+        std::mutex m_mutex;
+
+        std::string m_date; //当前答应的日期
+        FILE* m_file_handler{NULL}; //当前打开日志文件的句柄
+
+        bool m_reopen_flag {false};
+
+        int m_no{0};//日志文件序号
+
+        bool m_stop_flag{false};
+
+    public:
+        typedef std::shared_ptr<AsyncLogger> s_ptr;
+        AsyncLogger(std::string& file_name,std::string file_path,int max_size);
+        // ~AsyncLogger();
+        
+        static void* loop(void* );
+        void stop();
+
+        void flush();
+
+        void pushLogBufffer(std::vector<std::string>& vec);
+    };
+    
     class Logger
     {
     private:
         LogLevel m_set_level;
-        std::queue<std::string> m_buffer;
+        std::vector<std::string> m_buffer;
 
-        Mutex m_mutex;
+
+        std::mutex m_mutex;
+        AsyncLogger::s_ptr m_asnyc_logger;
+    // m_file_path/m_file_name_yyyymmdd.m_no
+        std::string m_file_name; //日志输出的名字
+        std::string m_file_path; //日志和i输出路径
+        int m_max_file_size {0}; //
+
+        TimerEvent::s_ptr m_timer_event;
 
     public:
         static void InitGlobgalLogger();
@@ -76,13 +126,16 @@ namespace rocket
     public:
         void log();
         void pushLog(const std::string &msg);
+        void init();
         typedef std::shared_ptr<Logger> s_ptr;
 
-        Logger(LogLevel level) : m_set_level(level){};
+        Logger(LogLevel level);
         LogLevel getLogLevel() const
         {
             return m_set_level;
         }
+
+        void syncLoop();
     };
 
     class LogEvent
@@ -94,6 +147,8 @@ namespace rocket
         int32_t m_pid;
         int32_t m_thread_id;
         LogLevel m_level;
+
+
 
     public:
         std::string getFileName() const
@@ -112,5 +167,27 @@ namespace rocket
     };
 
     // void DEBUGLOG(std::string str,...);
+
+
+
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
 #endif
