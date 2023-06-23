@@ -11,6 +11,23 @@
 
 namespace rocket
 {
+
+    #define NEWMESSAGE(type, var_name) \
+     std::shared_ptr<type> var_name = std::make_shared<type>(); \
+
+    #define NEWRPCCONTROLLER(var_name) \
+     std::shared_ptr<rocket::RpcController> var_name = std::make_shared<rocket::RpcController>(); \
+
+    #define NEWRPCCHANNEL(addr,var_name)\
+    std::shared_ptr<rocket::RpcChannel> var_name = std::make_shared<rocket::RpcChannel> (std::make_shared<rocket::IPNetAddr>(addr));\
+
+    #define CALLRCP(addr,method_name,controller,response,request,closure) \
+    {\
+        NEWRPCCHANNEL(addr,channel);\
+        channel->Init(controller,response,request,closure);\
+        Order_Stub(channel.get()).method_name(controller.get(),request.get(),response.get(),closure.get());\
+    }\
+
     class RpcChannel : public google::protobuf::RpcChannel,public std::enable_shared_from_this<RpcChannel>
     {
         public:
