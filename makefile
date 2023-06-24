@@ -14,6 +14,7 @@ PATH_NET = $(PATH_ROCKET)/net
 PATH_TCP = $(PATH_ROCKET)/net/tcp
 PATH_CODER = $(PATH_ROCKET)/net/coder
 PATH_RPC = $(PATH_ROCKET)/net/rpc
+PATH_LOG = log
 
 
 PATH_TESTCASES = testcases
@@ -100,7 +101,7 @@ PRINT-% : ; @echo $* = $($*)
 
 # to clean 
 clean:
-	rm -f $(COMM_OBJ) $(NET_OBJ)  $(TESTCASES)  $(TEST_CASE_OUT) $(PATH_LIB)/librocket.a $(PATH_OBJ)/librocket.a $(PATH_OBJ)/*.o
+	rm -f $(COMM_OBJ) $(NET_OBJ)  $(TESTCASES)  $(TEST_CASE_OUT) $(PATH_LIB)/librocket.a $(PATH_OBJ)/librocket.a $(PATH_OBJ)/*.o $(PATH_LOG)/*_log.*
 
 # install
 install:

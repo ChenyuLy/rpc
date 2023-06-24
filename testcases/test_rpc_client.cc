@@ -109,7 +109,8 @@ void test_rpc_channel(){
         }
         
         INFOLOG("exit eventloop");
-        channel->getTcpClient()->stop();
+        // channel->getTcpClient()->stop();
+        
         channel.reset();
     });
 
@@ -123,7 +124,7 @@ void test_rpc_channel(){
 
 int main()
 {
-    rocket::Config::SetGlobelConfig("conf/rocket.xml");
+    rocket::Config::SetGlobelConfig("conf/rocket_client.xml");
     rocket::Logger::InitGlobgalLogger();
 
     // std::shared_ptr<OrderImpl> service = std::make_shared<OrderImpl>();

@@ -51,6 +51,27 @@ namespace rocket
         rocket::Logger::GetGlobgalLogger()->pushLog(rocket::LogEvent(rocket::LogLevel::Error).toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
     }
 
+
+
+#define APPDEBUGLOG(str, ...)                                                                                                                                                                                                 \
+    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Debug)                                                                                                                                                \
+    {                                                                                                                                                                                                                      \
+        rocket::Logger::GetGlobgalLogger()->pushAppLog(rocket::LogEvent(rocket::LogLevel::Debug).toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+    }
+
+#define APPINFOLOG(str, ...)                                                                                                                                                                                                 \
+    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Info)                                                                                                                                                \
+    {                                                                                                                                                                                                                     \
+        rocket::Logger::GetGlobgalLogger()->pushAppLog(rocket::LogEvent(rocket::LogLevel::Info).toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+    }
+
+#define APPERRORLOG(str, ...)                                                                                                                                                                                                 \
+    if (rocket::Logger::GetGlobgalLogger()->getLogLevel() <= rocket::Error)                                                                                                                                                \
+    {                                                                                                                                                                                                                      \
+        rocket::Logger::GetGlobgalLogger()->pushAppLog(rocket::LogEvent(rocket::LogLevel::Error).toString() + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + rocket::formatString(str, ##__VA_ARGS__) + "\n"); \
+    }
+
+
     enum LogLevel
     {
         Unknow = 0,
@@ -92,7 +113,7 @@ namespace rocket
 
     public:
         typedef std::shared_ptr<AsyncLogger> s_ptr;
-        AsyncLogger(std::string& file_name,std::string file_path,int max_size);
+        AsyncLogger(const std::string& file_name,const std::string file_path,int max_size);
         // ~AsyncLogger();
         
         static void* loop(void* );
@@ -108,10 +129,13 @@ namespace rocket
     private:
         LogLevel m_set_level;
         std::vector<std::string> m_buffer;
-
+        std::vector<std::string> m_app_buffer;
 
         std::mutex m_mutex;
+        std::mutex m_app_mutex;
         AsyncLogger::s_ptr m_asnyc_logger;
+        AsyncLogger::s_ptr m_asnyc_app_logger;
+
     // m_file_path/m_file_name_yyyymmdd.m_no
         std::string m_file_name; //日志输出的名字
         std::string m_file_path; //日志和i输出路径
@@ -126,6 +150,8 @@ namespace rocket
     public:
         void log();
         void pushLog(const std::string &msg);
+        void pushAppLog(const std::string &msg);
+        
         void init();
         typedef std::shared_ptr<Logger> s_ptr;
 

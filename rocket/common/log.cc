@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "log.h"
 #include "rocket/net/eventloop.h"
+#include "rocket/common/run_time.h"
 
 
 namespace rocket
@@ -80,7 +81,16 @@ namespace rocket
            << "[" << time_str << "]\t"
            << "[" << m_pid << ":"<< m_thread_id << "]\t";
         //    << "[" << std::string(__FILE__) << ":" << __LINE__ << "]\t";
+        std::string msgid =  RunTime::GetRunTime()->m_msgid;
+        std::string method_name =  RunTime::GetRunTime()->m_method_name;
+        //获取当前线程处理的msgid
 
+        if(!msgid.empty()){
+            ss << "[" << msgid << "]\t";
+        }
+            if(!method_name.empty()){
+            ss << "[" << method_name << "]\t";
+        }
         return ss.str();
     }
 
@@ -109,22 +119,38 @@ namespace rocket
         // ScopeMutext<Mutex> lock(m_mutex);
         std::unique_lock<std::mutex> lock(m_mutex);
         m_buffer.push_back(msg);
+        // printf("push_back\n");
+        lock.unlock();
+
+
+    }
+
+    void Logger::pushAppLog(const std::string &msg)
+    {
+        std::unique_lock<std::mutex> lock(m_app_mutex);
+        m_app_buffer.push_back(msg);
+        // printf("push_back\n");
         lock.unlock();
     }
 
     void Logger::init()
     {
-        m_asnyc_logger =  std::make_shared<AsyncLogger>
-                    (Config::GetGlobalConfig()->m_log_file_name,
-                    Config::GetGlobalConfig()->m_log_file_path,
-                    Config::GetGlobalConfig()->m_log_max_file_size);
+
         m_timer_event =std::make_shared<TimerEvent>(Config::GetGlobalConfig()->m_log_sync_inteval,true,std::bind(&Logger::syncLoop,this));
         EventLoop::GetCurrentEventLoop()->addTimerEvent(m_timer_event);
+        // printf("addTimerEvent \n");
     }
 
     Logger::Logger(LogLevel level):m_set_level(level)
     {
-
+        m_asnyc_logger =  std::make_shared<AsyncLogger>
+                    (Config::GetGlobalConfig()->m_log_file_name + "_rpc",
+                    Config::GetGlobalConfig()->m_log_file_path,
+                    Config::GetGlobalConfig()->m_log_max_file_size );
+        m_asnyc_app_logger =  std::make_shared<AsyncLogger>
+                    (Config::GetGlobalConfig()->m_log_file_name + "_app",
+                    Config::GetGlobalConfig()->m_log_file_path,
+                    Config::GetGlobalConfig()->m_log_max_file_size);
     }
 
     void Logger::syncLoop()
@@ -133,16 +159,26 @@ namespace rocket
         std::vector<std::string> tmp_vec = m_buffer;
         std::unique_lock<std::mutex> lock(m_mutex);
         m_buffer.swap(tmp_vec);
-
+        
+        m_buffer.clear();
+        // printf("size of buffer :%d\n",m_buffer.size());
         lock.unlock();
-        if(!tmp_vec.empty())
-        m_asnyc_logger->pushLogBufffer(tmp_vec);
+        if(!tmp_vec.empty()) m_asnyc_logger->pushLogBufffer(tmp_vec);
+
+
+        tmp_vec.clear();
+        std::vector<std::string> tmp_vec2 = m_app_buffer;
+        std::unique_lock<std::mutex> lock2(m_app_mutex);
+        m_app_buffer.swap(tmp_vec2);
+        m_app_buffer.clear();
+        lock2.unlock();
+        if(!tmp_vec2.empty()) m_asnyc_app_logger->pushLogBufffer(tmp_vec2);
 
 
 
     }
 
-    AsyncLogger::AsyncLogger(std::string &file_name, std::string file_path, int max_size):m_file_name(file_name),m_file_path(file_path),m_max_file_size(max_size)
+    AsyncLogger::AsyncLogger(const std::string &file_name,const std::string file_path, int max_size):m_file_name(file_name),m_file_path(file_path),m_max_file_size(max_size)
     {
         sem_init(&m_sempahore,0,0);
 
@@ -159,12 +195,13 @@ namespace rocket
 
         sem_post(&logger->m_sempahore);
 
-        printf("333333");
+        // printf("333333");
         while(1){
             std::unique_lock<std::mutex>lock(logger->m_mutex);
             while(logger->m_buffer.empty()){
                 logger->m_condtion.wait(lock);
             }
+            // printf("thread_cond_wait back \n");
 
             std::vector<std::string> tmp;
             tmp.swap(logger->m_buffer.front());
@@ -192,7 +229,7 @@ namespace rocket
             }
 
             std::stringstream ss;
-            ss<< logger->m_file_path<<logger->m_file_name<<"_"<<std::string(date) << ".";
+            ss<< logger->m_file_path<<logger->m_file_name<<"_"<<std::string(date) << "_log.";
             std::string log_file_name = ss.str() + std::to_string(logger->m_no);
 
             if(logger->m_reopen_flag){
@@ -202,12 +239,12 @@ namespace rocket
                 logger->m_file_handler = fopen(log_file_name.c_str(),"a");
                 logger->m_reopen_flag = false;
             }
-            printf("22222");
+            // printf("22222");
             if(ftell(logger->m_file_handler) > logger->m_max_file_size){
                 fclose(logger->m_file_handler);
-                printf("1111");
+                // printf("1111");
                 logger->m_no++;
-                log_file_name = ss.str() +std::to_string(logger->m_no++);
+                log_file_name = ss.str() +std::to_string(logger->m_no);
                 logger->m_file_handler = fopen(log_file_name.c_str(),"a");
                 logger->m_reopen_flag = false;
             }
@@ -244,6 +281,6 @@ namespace rocket
         lock.unlock();
         //这时候需要唤醒异步日志线程
         m_condtion.notify_all();
-
+        // printf("pthread_cond_signal \n");
     }
 }

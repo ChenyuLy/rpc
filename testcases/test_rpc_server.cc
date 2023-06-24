@@ -30,15 +30,16 @@ class OrderImpl: public Order{
                        ::makeOrderResponse* response,
                        ::google::protobuf::Closure* done){
 
-            DEBUGLOG("start sleep 5");
+            APPDEBUGLOG("start sleep 5");
             sleep(5);
-            DEBUGLOG("end sleep 5");
+            APPDEBUGLOG("end sleep 5");
             if(request -> price() <10 ){
                 response->set_ret_code(-1);
                 response->set_res_info("short balence");
                 return;
             }
             response->set_order_id("20230514");
+            APPDEBUGLOG("call makeOrder success");
 
         }
 };
